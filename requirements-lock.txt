@@ -1,0 +1,16 @@
+aiohappyeyeballs==2.7.1
+aiohttp==3.13.2
+aiosignal==1.4.0
+attrs==26.1.0
+colorama==0.4.6
+frozenlist==1.8.0
+idna==3.20
+multidict==6.9.1
+packaging==26.3
+propcache==0.5.4
+qrcode==8.2
+setuptools==84.2.1
+typing_extensions==4.16.0
+vgamepad==0.1.0
+wheel==0.48.0
+yarl==1.25.1

@@ -1,0 +1,7 @@
+<resources>
+    <style name="LaunchTheme" parent="AppTheme">
+        <item name="android:windowSplashScreenBackground">@color/app_background</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/ic_mark</item>
+        <item name="android:windowSplashScreenIconBackgroundColor">@color/app_background</item>
+    </style>
+</resources>

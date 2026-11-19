@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+  <meta name="theme-color" content="#101012">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>PocketPad — Local controller studio</title>
+  <link rel="icon" href="/assets/pocketpad-mark.svg">
+  <link rel="stylesheet" href="/assets/style.css?v=2.1">
+  <link rel="stylesheet" href="/assets/experience.css?v=2.1">
+</head>
+<body>
+<div id="studio">
+  <header class="topbar">
+    <a class="brand" href="/"><span>PocketPad</span><small>LOCAL</small></a>
+    <nav class="tabs" aria-label="Workspace"><button class="active" data-tab="editor">Controller</button><button data-tab="connect">Connection <span id="connectionDot" class="dot"></span></button><button data-tab="monitor">Inputs</button></nav>
+    <button class="primary" id="pairButton">Connect phone</button>
+  </header>
+  <main>
+    <section class="page-heading"><div><h1>Controller</h1><p>Choose a layout. Adjust your controls.</p></div><span class="local-tag"><span class="dot live"></span> Local session</span></section>
+    <section id="editorTab" class="tab-page">
+      <div class="preset-bar"><div id="presets" class="preset-list"></div><button class="quiet" id="exportButton" title="Export current layout">Export</button><button class="quiet" id="importButton">Import</button><input id="importFile" type="file" accept="application/json,.json" hidden></div>
+      <div class="workspace">
+        <aside class="panel library-panel"><div class="panel-title"><h2>Controls</h2><span id="libraryCount"></span></div><p class="hint">Drag onto the layout, or click to add.</p><input class="search" id="librarySearch" placeholder="Find a control" aria-label="Search controls"><div class="library-filters"><button class="active" data-filter="all">All</button><button data-filter="button">Buttons</button><button data-filter="axis">Sticks & pads</button></div><div id="library" class="library"></div></aside>
+        <div class="canvas-column"><div class="canvas-toolbar"><div><strong id="layoutTitle">Xbox</strong><span id="draftBadge" hidden class="badge">Unsaved</span></div><div><button class="icon-button" id="undoButton" title="Undo (Ctrl+Z)">↶</button><button class="icon-button" id="redoButton" title="Redo (Ctrl+Y)">↷</button><button class="quiet" id="resetButton">Reset</button></div></div><div class="canvas-frame"><div id="editorViewport" class="viewport"><div id="editorSurface" class="surface editor-surface"></div></div><div class="canvas-caption"><span>Drag to move. Drag a corner to resize.</span><button class="quiet" id="layoutSettingsButton">Layout settings</button></div></div><div class="canvas-bottom"><label class="toggle-label"><input id="snapGrid" type="checkbox" checked> Snap to grid</label><div><button class="quiet" id="phonePreview">Test controller</button><button class="primary" id="saveButton">Save layout</button></div></div><div class="size-toolbar"><label for="allControlSize">All controls <output id="allControlSizeValue">100%</output></label><input id="allControlSize" type="range" min="65" max="160" value="100"><span>Individual sizes are in the control settings.</span></div></div>
+        <aside class="panel inspector-panel"><div class="panel-title"><h2 id="inspectorTitle">Layout settings</h2><span id="selectedType" class="mini-label">HUD</span></div><div id="inspector"></div></aside>
+      </div>
+    </section>
+    <section id="connectTab" class="tab-page" hidden><div class="connect-grid"><article class="panel pair-card"><h2>Connect your phone</h2><p>Connect your phone and PC to the same Wi-Fi,<br>then scan this code with your phone camera.</p><label class="field">QR code for<select id="qrPurpose"><option value="play">Pair controller</option><option value="android">Install Android app</option></select></label><div class="qr-wrap"><img id="qrImage" alt="Scan to connect your phone"></div><label class="field">PC network address<select id="networkSelect"></select></label><div class="url-box"><input id="pairUrl" readonly aria-label="Phone pairing link"><button id="copyUrl" class="quiet">Copy</button></div><a id="localPlayLink" class="quiet inline-link" target="_blank">Open controller on this PC ↗</a></article><div class="connection-details"><article class="panel"><div class="panel-title"><h2>Connection status</h2><span id="phoneBadge" class="badge">Waiting for phone</span></div><div class="connection-row"><span>Virtual controller</span><strong id="driverState">Checking…</strong></div><p id="driverError" class="notice" hidden></p><div class="connection-row"><span>Phone</span><strong id="phoneName">Not connected</strong></div><div class="connection-row"><span>Output</span><strong id="outputState">Xbox / XInput</strong></div><div class="connection-row"><span>Host</span><strong id="hostState">Connecting…</strong></div><button class="quiet danger" id="disconnectButton">Disconnect phone</button></article><article class="panel transport-card"><h2>Choose your connection</h2><div><b>01</b><p><strong>Wi-Fi / QR</strong><span>Same router or PC mobile hotspot. No phone app to install.</span></p></div><div><b>02</b><p><strong>Bluetooth tethering</strong><span>On supported phones, pair in Windows, enable Bluetooth tethering and join its PAN network. Select that PC IP above. Direct Bluetooth controller pairing is not supported.</span></p></div><div><b>03</b><p><strong>USB tethering</strong><span>Enable USB tethering on your phone and use its PC network address for a wired network connection.</span></p></div><p class="hint">First connection: allow PocketPad through Windows Firewall on your private network. If the QR code does not open, choose another network address.</p></article></div></div></section>
+    <section id="monitorTab" class="tab-page" hidden><div class="panel monitor-card"><div class="panel-title"><h2>Live input monitor</h2><span id="monitorBadge" class="badge">Waiting for controller</span></div><p class="hint">Touch controls on your phone to see exactly what the PC receives.</p><div id="monitorButtons" class="monitor-buttons"></div><div id="monitorAxes" class="monitor-axes"></div><div class="notice">To check the Windows gamepad, press Win + R, enter <strong>joy.cpl</strong>, and open the controller Properties. Native PlayStation touch input requires DS4 support in the game. Select Xbox output for XInput games.</div></div></section>
+  </main>
+  <footer><span><span class="dot" id="hostDot"></span> <span id="footerStatus">Starting host…</span></span><span>PocketPad 2.1</span></footer>
+</div>
+<div id="player" hidden>
+  <div id="playerToolbar" class="player-toolbar"><a class="player-brand" href="/">PocketPad</a><span id="playerStatus">Connecting…</span><div class="player-actions"><button id="playerSettingsButton">Settings</button><button id="playerGyroToggle" aria-pressed="false" hidden>Gyro off</button><button id="playerMotionButton" hidden title="Gyro settings">Gyro settings</button><button id="playerSizeButton">Size</button><button id="playerPresetButton" title="Switch layout">Layouts</button><button id="fullscreenButton" title="Fullscreen">⛶</button><button id="exitPlayer" title="Release controller">Pause</button></div></div>
+  <div id="playerViewport" class="viewport"><div id="playerSurface" class="surface play-surface"></div></div>
+  <div id="playerOverlay" class="player-overlay"><div><div id="connectionVisual" class="connection-visual" data-state="connecting"><i></i><i></i><span>⌁</span></div><div id="connectionTitle" class="connection-title">Connecting</div><h1>PocketPad</h1><p id="playerMessage">Turn your phone sideways. Keep this page open while playing.</p><button class="primary" id="startPlaying">Start controller</button></div></div>
+  <div class="rotate-hint">↻ Rotate your phone for a bigger controller</div>
+  <div id="playerPresetMenu" class="player-preset-menu" hidden></div>
+  <div id="playerSizeMenu" class="player-preset-menu size-menu" hidden><label for="phoneControlSize">Control size <output id="phoneControlSizeValue">100%</output></label><input id="phoneControlSize" type="range" min="65" max="150" value="100"><p>Saved on this phone. Use the desktop editor to resize a specific control.</p><button id="phoneSizeReset">Reset to layout size</button></div>
+  <div id="playerMotionMenu" class="player-preset-menu size-menu gyro-menu" hidden>
+    <label class="toggle-label"><input id="motionEnabled" type="checkbox"> Enable gyroscope</label>
+    <label class="field">Mode<select id="motionMode"><option value="off">Off</option><option value="aim">GTA V aiming · right stick</option><option value="steer">Driving · tilt steering</option></select></label>
+    <label class="field">Sensitivity <output id="motionSensitivityValue">100%</output><input id="motionSensitivity" type="range" min="25" max="200" value="100"></label>
+    <label class="toggle-label"><input id="motionAimOnly" type="checkbox" checked> Only while holding LT / L2</label>
+    <div class="gyro-inverts"><label class="toggle-label"><input id="motionInvertX" type="checkbox"> Invert X</label><label class="toggle-label"><input id="motionInvertY" type="checkbox"> Invert Y</label></div>
+    <button id="motionRecenter">Recenter phone</button><p id="motionHint">Use the right stick for large turns, move your phone for fine aim.</p>
+  </div>
+  <div id="playerSettingsMenu" class="player-preset-menu size-menu" hidden><label class="field">Appearance<select id="appearanceChoice"><option value="matte">Matte black</option><option value="oled">OLED black</option><option value="glass">Translucent</option></select></label><label class="toggle-label"><input id="richMotion" type="checkbox" checked> Rich animations</label><label class="toggle-label"><input id="experienceHaptics" type="checkbox" checked> Haptic feedback</label><p>Animations are on by default. Turn them off for an instant, still interface.</p><button id="replayWalkthrough">Replay getting-started guide</button></div>
+  <div id="walkthrough" class="walkthrough" hidden><div class="tour-card"><div class="tour-top"><span id="tourProgress">GETTING STARTED · 1 / 4</span><button id="tourSkip">Skip guide</button></div><h2 id="tourTitle"></h2><p id="tourDescription"></p><div id="tourPractice" class="tour-practice"></div><div id="tourFeedback" class="tour-feedback" role="status"></div><div class="tour-actions"><button id="tourBack">Back</button><div id="tourDots"></div><button id="tourNext" class="primary">Next</button></div></div></div>
+</div>
+<dialog id="saveDialog"><form id="saveForm"><h2>Save layout</h2><p>Choose one of your two custom slots.</p><label class="field">Name<input id="presetName" required maxlength="40" placeholder="My layout"></label><label class="field">Slot<select id="saveSlot"><option value="2">Custom 1</option><option value="3">Custom 2</option></select></label><p class="hint" id="slotWarning"></p><div class="dialog-actions"><button type="button" class="quiet" id="cancelSave">Cancel</button><button class="primary" type="submit">Save</button></div></form></dialog>
+<div id="toast" role="status"></div>
+<script type="module" src="/assets/app.js?v=2.1"></script>
+</body>
+</html>

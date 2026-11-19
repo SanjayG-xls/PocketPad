@@ -1,0 +1,5 @@
+.tools/
+build/
+app/src/main/assets/controller/
+local.properties
+.gradle/
