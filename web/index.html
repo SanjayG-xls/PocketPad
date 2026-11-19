@@ -33,7 +33,7 @@
   <footer><span><span class="dot" id="hostDot"></span> <span id="footerStatus">Starting host…</span></span><span>PocketPad 2.1</span></footer>
 </div>
 <div id="player" hidden>
-  <div id="playerToolbar" class="player-toolbar"><a class="player-brand" href="/">PocketPad</a><span id="playerStatus">Connecting…</span><div class="player-actions"><button id="playerSettingsButton">Settings</button><button id="playerGyroToggle" aria-pressed="false" hidden>Gyro off</button><button id="playerMotionButton" hidden title="Gyro settings">Gyro settings</button><button id="playerSizeButton">Size</button><button id="playerPresetButton" title="Switch layout">Layouts</button><button id="fullscreenButton" title="Fullscreen">⛶</button><button id="exitPlayer" title="Release controller">Pause</button></div></div>
+  <div id="playerToolbar" class="player-toolbar"><a class="player-brand" href="/">PocketPad</a><span id="playerStatus">Connecting…</span><div class="player-actions"><button id="playerDrivingToggle" aria-pressed="true">Driving</button><button id="playerSettingsButton">Settings</button><button id="playerGyroToggle" aria-pressed="false" hidden>Gyro off</button><button id="playerMotionButton" hidden title="Gyro settings">Gyro settings</button><button id="playerSizeButton">Size</button><button id="playerPresetButton" title="Switch layout">Layouts</button><button id="fullscreenButton" title="Fullscreen">⛶</button><button id="exitPlayer" title="Release controller">Pause</button></div></div>
   <div id="playerViewport" class="viewport"><div id="playerSurface" class="surface play-surface"></div></div>
   <div id="playerOverlay" class="player-overlay"><div><div id="connectionVisual" class="connection-visual" data-state="connecting"><i></i><i></i><span>⌁</span></div><div id="connectionTitle" class="connection-title">Connecting</div><h1>PocketPad</h1><p id="playerMessage">Turn your phone sideways. Keep this page open while playing.</p><button class="primary" id="startPlaying">Start controller</button></div></div>
   <div class="rotate-hint">↻ Rotate your phone for a bigger controller</div>
@@ -52,6 +52,6 @@
 </div>
 <dialog id="saveDialog"><form id="saveForm"><h2>Save layout</h2><p>Choose one of your two custom slots.</p><label class="field">Name<input id="presetName" required maxlength="40" placeholder="My layout"></label><label class="field">Slot<select id="saveSlot"><option value="2">Custom 1</option><option value="3">Custom 2</option></select></label><p class="hint" id="slotWarning"></p><div class="dialog-actions"><button type="button" class="quiet" id="cancelSave">Cancel</button><button class="primary" type="submit">Save</button></div></form></dialog>
 <div id="toast" role="status"></div>
-<script type="module" src="/assets/app.js?v=2.1"></script>
+<script type="module" src="/assets/app.js?v=2.1-driving"></script>
 </body>
 </html>

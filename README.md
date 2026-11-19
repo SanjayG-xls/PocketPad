@@ -55,6 +55,8 @@ The PC app is a **native WPF application** with its own installer. The Android c
 
 ## Fine aim with your phone
 
+For GTA V vehicles, the phone starts in **Driving** mode. Drag **L up** to accelerate, **left/right** to steer, and **down** to brake/reverse. Pedal pressure and steering increase with drag distance; full throttle remains available while turning. **R** looks around. Releasing L releases the pedals and centers the steering. Tap **Driving** in the toolbar to switch to **On foot** movement; the choice is saved on that phone.
+
 Open **Gyro settings** on the phone and choose **GTA V aiming**. Switch **Gyro on** in the toolbar, hold **LT / L2**, and move the phone to adjust your aim. Use the right thumb stick for larger turns; it takes priority over gyro.
 
 - Aiming responds to phone rotation speed and settles when you stop moving the phone.

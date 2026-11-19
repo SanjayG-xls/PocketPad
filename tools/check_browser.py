@@ -40,6 +40,54 @@ class CDP:
         Path(path).write_bytes(base64.b64decode(shot['data']))
 
 
+async def check_driving(controller,host):
+    """Exercise the phone-to-host path, including analog levels and release."""
+    assert await controller.evaluate("document.querySelector('#playerDrivingToggle').getAttribute('aria-pressed')==='true'")
+    boxes=await controller.evaluate("['left-stick','right-stick'].map(id=>{let r=document.querySelector('#playerSurface [data-id='+id+']').getBoundingClientRect();return {x:r.x,y:r.y,w:r.width,h:r.height}})")
+    def point(index,x,y):
+        box=boxes[index]
+        return dict(id=51+index,x=box['x']+box['w']*x,y=box['y']+box['h']*y)
+    async def touch(kind,*points):
+        await controller.command('Input.dispatchTouchEvent',type=kind,touchPoints=list(points))
+        await asyncio.sleep(.07)
+    await touch('touchStart',point(0,.52,.48))
+    assert host.state==neutral(),'Driving deadzone did not center'
+    await touch('touchMove',point(0,.5,.225))
+    assert .47<host.state['rt']<.53 and host.state['ly']==0,f'Half throttle failed: {host.state}'
+    await touch('touchMove',point(0,.5,.01))
+    assert host.state['rt']>.95 and host.state['lx']==0,'Full throttle failed'
+    await touch('touchMove',point(0,.99,.01))
+    assert host.state['rt']>.95 and host.state['lx']>.95,'Turning reduced full throttle'
+    await touch('touchStart',point(0,.99,.01),point(1,.25,.75))
+    assert host.state['rt']>.95 and host.state['lx']>.95 and host.state['rx']<-.3 and host.state['ry']>.3,'Driving and camera multitouch failed'
+    await touch('touchEnd')
+    assert host.state==neutral(),'Driving release stuck'
+    await touch('touchStart',point(0,.01,.5))
+    assert host.state['lx']<-.95 and host.state['rt']==0 and host.state['lt']==0,'Steering alone applied a pedal'
+    await touch('touchMove',point(0,.5,.775))
+    assert .47<host.state['lt']<.53 and host.state['rt']==0,'Proportional brake failed'
+    await touch('touchMove',point(0,.5,.99))
+    assert host.state['lt']>.95 and host.state['rt']==0,'Full brake/reverse failed'
+    await touch('touchCancel')
+    assert host.state==neutral(),'Cancelled driving touch stuck'
+    await touch('touchStart',point(0,.5,.01))
+    await controller.evaluate("document.querySelector('#playerDrivingToggle').click()")
+    await asyncio.sleep(.07)
+    assert host.state==neutral(),'Mode switch left throttle held'
+    await touch('touchMove',point(0,.5,.02))
+    assert host.state==neutral(),'Cleared touch resumed after mode switch'
+    await touch('touchEnd')
+    await touch('touchStart',point(0,.5,.01))
+    assert host.state['ly']<-.95 and host.state['rt']==0,'On-foot movement was not restored'
+    await touch('touchEnd')
+    await controller.command('Page.reload')
+    await controller.wait("document.querySelectorAll('#playerSurface .control').length>10")
+    assert await controller.evaluate("document.querySelector('#playerDrivingToggle').getAttribute('aria-pressed')==='false'"),'Driving preference was not restored'
+    await controller.evaluate("document.querySelector('#playerDrivingToggle').click();document.querySelector('#startPlaying').click()")
+    await controller.wait("document.querySelector('#playerOverlay').hidden")
+    await controller.evaluate("document.fullscreenElement?document.exitFullscreen():null")
+
+
 async def main():
     results=ROOT/'test-results';results.mkdir(exist_ok=True)
     with tempfile.TemporaryDirectory(prefix='pocketpad-browser-') as profile, tempfile.TemporaryDirectory() as data:
@@ -115,6 +163,7 @@ async def main():
                 await phone.command('Input.dispatchTouchEvent',type='touchEnd',touchPoints=[])
                 await asyncio.sleep(.15)
                 assert host.state==neutral(),f'Inputs stuck after release: {host.state}'
+                await check_driving(phone,host)
                 full_width=await phone.evaluate("document.querySelector('#playerSurface').clientWidth===document.querySelector('#player').clientWidth")
                 assert full_width,'Phone controller is letterboxed horizontally'
                 stick_width=await phone.evaluate("document.querySelector('#playerSurface [data-id=\"left-stick\"]').getBoundingClientRect().width")
@@ -125,6 +174,7 @@ async def main():
                 # Switch to the factory PS5 HUD and create the second custom slot.
                 await phone.evaluate("document.querySelector('#playerPresetButton').click();document.querySelectorAll('#playerPresetMenu button')[1].click()")
                 await phone.wait("document.querySelector('#playerSurface').classList.contains('ps5')")
+                await check_driving(phone,host)
                 await phone.screenshot(results/'ps5.png')
                 touchpad=await phone.evaluate("(()=>{let r=document.querySelector('#playerSurface [data-id=\"touchpad\"]').getBoundingClientRect();return {x:r.x,y:r.y,w:r.width,h:r.height}})()")
                 points=[{'id':11,'x':touchpad['x']+touchpad['w']*.25,'y':touchpad['y']+touchpad['h']*.4},
@@ -225,7 +275,7 @@ async def main():
                 await native.ws.close()
                 assert not desktop.errors,desktop.errors
                 assert not phone.errors,phone.errors
-                print('PASS: editor, resizing, phone sizing, presets, QR, multitouch, native touchpad, click/release, Android bridge, offline preview, gyro controls, and app pause.')
+                print('PASS: editor, resizing, phone sizing, presets, QR, driving throttle/steering/brake/camera on both layouts, mode persistence/release, multitouch, native touchpad, click/release, Android bridge, offline preview, gyro controls, and app pause.')
                 await desktop.ws.close();await phone.ws.close()
         finally:
             process.terminate()

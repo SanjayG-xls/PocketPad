@@ -31,6 +31,8 @@ let motionMode='off', motionSensitivity=1, motionInput={lx:0,ly:0,rx:0,ry:0};
 let motionSettings={profile:'aim',sensitivity:100,aimOnly:true,invertX:false,invertY:false},lastMotionEvent=0;
 function resetMotion(){motionInput={lx:0,ly:0,rx:0,ry:0};lastMotionEvent=0;}
 let phoneScale=1, touchSerial=0, pointerDelta={dx:0,dy:0}, lastTouch=new Map(), touchPulse=false;
+let drivingMode=true;
+try{drivingMode=localStorage.getItem('pocketpad-driving')!=='false';}catch{}
 try{phoneScale=clamp(Number(localStorage.getItem('pocketpad-phone-scale'))||1,.65,1.5);}catch{}
 
 function icon(mapping,theme='xbox'){
@@ -459,11 +461,20 @@ function renderPlayer(animate=false){
       if(c.type==='trigger'){const value=clamp(1-y,0,1);s[c.mapping]=value;el.querySelector('.control-fill').style.height=`${value*100}%`;}
       if(c.type==='slider'){const value=['lt','rt'].includes(c.mapping)?x:x*2-1;s[c.mapping]=value;el.querySelector('.control-fill').style.width=`${x*100}%`;}
       if(c.type==='stick'){
-        let dx=(x-.5)*2,dy=(y-.5)*2;const length=Math.hypot(dx,dy);if(length>1){dx/=length;dy/=length;}
-        const deadzone=c.deadzone??.1,mag=Math.hypot(dx,dy);
-        if(mag<=deadzone){dx=dy=0;}else{const scaled=(mag-deadzone)/(1-deadzone);dx=dx/mag*scaled;dy=dy/mag*scaled;}
-        s[c.mapping==='left'?'lx':'rx']=dx;s[c.mapping==='left'?'ly':'ry']=dy;
-        el.querySelector('.stick-knob').style.transform=`translate(${dx*rect.width*.15}px,${dy*rect.height*.15}px)`;
+        let dx=(x-.5)*2,dy=(y-.5)*2;const deadzone=c.deadzone??.1;
+        if(drivingMode&&c.mapping==='left'){
+          // Independent axes keep full throttle available while turning the wheel.
+          const axis=value=>Math.sign(value)*clamp((Math.abs(value)-deadzone)/(1-deadzone),0,1);
+          dx=axis(dx);dy=axis(dy);
+          s.lx=dx;s.ly=0;s.rt=Math.max(0,-dy);s.lt=Math.max(0,dy);
+        }else{
+          const length=Math.hypot(dx,dy);if(length>1){dx/=length;dy/=length;}
+          const mag=Math.hypot(dx,dy);
+          if(mag<=deadzone){dx=dy=0;}else{const scaled=(mag-deadzone)/(1-deadzone);dx=dx/mag*scaled;dy=dy/mag*scaled;}
+          s[c.mapping==='left'?'lx':'rx']=dx;s[c.mapping==='left'?'ly':'ry']=dy;
+        }
+        const travel=Math.max(1,Math.hypot(dx,dy));
+        el.querySelector('.stick-knob').style.transform=`translate(${dx/travel*rect.width*.15}px,${dy/travel*rect.height*.15}px)`;
       }
       if(c.type==='dpad'){
         const dx=x-.5,dy=y-.5;
@@ -497,6 +508,18 @@ function renderPlayerPresets(){
 function setupPlayer(){
   $('studio').hidden=true;$('player').hidden=false;document.body.style.overflow='hidden';
   initializeExperience();
+  const refreshDriving=()=>{
+    $('playerDrivingToggle').textContent=drivingMode?'Driving':'On foot';
+    $('playerDrivingToggle').setAttribute('aria-pressed',String(drivingMode));
+    $('playerDrivingToggle').title=drivingMode?'Left stick: up to accelerate, down to brake/reverse, left/right to steer. Right stick: look. Tap for on-foot controls.':'Standard movement and camera sticks. Tap for driving controls.';
+  };
+  refreshDriving();
+  $('playerDrivingToggle').onclick=()=>{
+    clearInputs();drivingMode=!drivingMode;
+    try{localStorage.setItem('pocketpad-driving',String(drivingMode));}catch{}
+    refreshDriving();
+    toast(drivingMode?'Driving: L up = gas, down = brake/reverse, left/right = steer. R = look.':'On foot: L = move. R = look.');
+  };
   $('startPlaying').onclick=()=>{
     if(!serverOnline){toast('Waiting for the PC host. If it restarted, scan the new QR code.');return;}
     resumeWanted=false;clearInputs();send({type:'claim'});enterFullscreen();

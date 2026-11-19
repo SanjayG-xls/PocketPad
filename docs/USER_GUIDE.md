@@ -16,6 +16,8 @@ If the phone cannot open the link, try another PC network address in the pairing
 
 ## Android companion app
 
+The controller starts in **Driving** mode: L up sends proportional RT/R2 acceleration, L left/right steers, and L down sends proportional LT/L2 brake/reverse. R controls the camera. Steering and pedals use independent drag distances, so turning does not reduce throttle. Release L to release both pedals and center the wheel. Tap **Driving** in the phone toolbar for **On foot** (standard movement); tap again to return. The phone remembers the selected mode. Switching modes, pausing, and disconnecting release active inputs.
+
 Desktop **2.1** adds a permanent **Mobile app** sidebar page with the Android download QR, instructions, copy-link and Save APK actions. The companion update is **Android 1.2**; install the updated APK to get the new native settings, connection haptics and walkthrough support.
 
 ## Appearance and getting started
