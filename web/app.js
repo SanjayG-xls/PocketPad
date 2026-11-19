@@ -31,8 +31,9 @@ let motionMode='off', motionSensitivity=1, motionInput={lx:0,ly:0,rx:0,ry:0};
 let motionSettings={profile:'aim',sensitivity:100,aimOnly:true,invertX:false,invertY:false},lastMotionEvent=0;
 function resetMotion(){motionInput={lx:0,ly:0,rx:0,ry:0};lastMotionEvent=0;}
 let phoneScale=1, touchSerial=0, pointerDelta={dx:0,dy:0}, lastTouch=new Map(), touchPulse=false;
-let drivingMode=true;
-try{drivingMode=localStorage.getItem('pocketpad-driving')!=='false';}catch{}
+// The game does not report whether the player is in a vehicle. Start every
+// controller session on foot so a saved pedal mapping cannot trigger attacks.
+let drivingMode=false;
 try{phoneScale=clamp(Number(localStorage.getItem('pocketpad-phone-scale'))||1,.65,1.5);}catch{}
 
 function icon(mapping,theme='xbox'){
@@ -512,13 +513,13 @@ function setupPlayer(){
     $('playerDrivingToggle').textContent=drivingMode?'Driving':'On foot';
     $('playerDrivingToggle').setAttribute('aria-pressed',String(drivingMode));
     $('playerDrivingToggle').title=drivingMode?'Left stick: up to accelerate, down to brake/reverse, left/right to steer. Right stick: look. Tap for on-foot controls.':'Standard movement and camera sticks. Tap for driving controls.';
+    $('playerControlHint').textContent=drivingMode?'Driving: L accelerates, brakes and steers. R looks around. After leaving your vehicle, tap Driving to return to On foot.':'On foot: L moves your character. R looks around. After entering a vehicle, tap On foot to enable Driving.';
   };
   refreshDriving();
   $('playerDrivingToggle').onclick=()=>{
     clearInputs();drivingMode=!drivingMode;
-    try{localStorage.setItem('pocketpad-driving',String(drivingMode));}catch{}
     refreshDriving();
-    toast(drivingMode?'Driving: L up = gas, down = brake/reverse, left/right = steer. R = look.':'On foot: L = move. R = look.');
+    toast(drivingMode?'Driving: L = gas, brake and steer. R = look. Tap Driving when you leave the vehicle.':'On foot: L = move. R = look. Tap On foot when you enter a vehicle.');
   };
   $('startPlaying').onclick=()=>{
     if(!serverOnline){toast('Waiting for the PC host. If it restarted, scan the new QR code.');return;}

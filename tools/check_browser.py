@@ -42,7 +42,7 @@ class CDP:
 
 async def check_driving(controller,host):
     """Exercise the phone-to-host path, including analog levels and release."""
-    assert await controller.evaluate("document.querySelector('#playerDrivingToggle').getAttribute('aria-pressed')==='true'")
+    assert await controller.evaluate("document.querySelector('#playerDrivingToggle').getAttribute('aria-pressed')==='false'"),'Controller must start on foot, even with an old saved Driving preference'
     boxes=await controller.evaluate("['left-stick','right-stick'].map(id=>{let r=document.querySelector('#playerSurface [data-id='+id+']').getBoundingClientRect();return {x:r.x,y:r.y,w:r.width,h:r.height}})")
     def point(index,x,y):
         box=boxes[index]
@@ -50,6 +50,13 @@ async def check_driving(controller,host):
     async def touch(kind,*points):
         await controller.command('Input.dispatchTouchEvent',type=kind,touchPoints=list(points))
         await asyncio.sleep(.07)
+    for x,y in [(.5,.01),(.5,.99),(.01,.5),(.99,.5)]:
+        await touch('touchStart',point(0,.5,.5))
+        await touch('touchMove',point(0,x,y))
+        assert max(abs(host.state['lx']),abs(host.state['ly']))>.95,f'Default on-foot movement failed at {(x,y)}: {host.state}'
+        assert host.state['rt']==0 and host.state['lt']==0 and not host.state['buttons'],'On-foot stick sent an attack/aim input'
+        await touch('touchEnd')
+    await controller.evaluate("document.querySelector('#playerDrivingToggle').click()")
     await touch('touchStart',point(0,.52,.48))
     assert host.state==neutral(),'Driving deadzone did not center'
     await touch('touchMove',point(0,.5,.225))
@@ -80,10 +87,15 @@ async def check_driving(controller,host):
     await touch('touchStart',point(0,.5,.01))
     assert host.state['ly']<-.95 and host.state['rt']==0,'On-foot movement was not restored'
     await touch('touchEnd')
+    await controller.evaluate("document.querySelector('#playerDrivingToggle').click()")
+    await touch('touchStart',point(0,.5,.01))
+    assert host.state['rt']>.95,'Driving mode did not re-enable'
     await controller.command('Page.reload')
     await controller.wait("document.querySelectorAll('#playerSurface .control').length>10")
-    assert await controller.evaluate("document.querySelector('#playerDrivingToggle').getAttribute('aria-pressed')==='false'"),'Driving preference was not restored'
-    await controller.evaluate("document.querySelector('#playerDrivingToggle').click();document.querySelector('#startPlaying').click()")
+    assert await controller.evaluate("document.querySelector('#playerDrivingToggle').getAttribute('aria-pressed')==='false'"),'A new session restored pedal mappings instead of starting on foot'
+    assert host.state==neutral(),'Reload left driving inputs active'
+    await touch('touchEnd')
+    await controller.evaluate("document.querySelector('#startPlaying').click()")
     await controller.wait("document.querySelector('#playerOverlay').hidden")
     await controller.evaluate("document.fullscreenElement?document.exitFullscreen():null")
 
@@ -111,7 +123,7 @@ async def main():
                     ws=await session.ws_connect(target['webSocketDebuggerUrl'])
                     c=CDP(ws)
                     await c.command('Runtime.enable');await c.command('Page.enable')
-                    await c.command('Page.addScriptToEvaluateOnNewDocument',source="try{localStorage.setItem('pocketpad-tour-complete','1');localStorage.setItem('pocketpad-experience',JSON.stringify({appearance:'matte',animations:false,haptics:true}));}catch(e){}")
+                    await c.command('Page.addScriptToEvaluateOnNewDocument',source="try{localStorage.setItem('pocketpad-tour-complete','1');localStorage.setItem('pocketpad-driving','true');localStorage.setItem('pocketpad-experience',JSON.stringify({appearance:'matte',animations:false,haptics:true}));}catch(e){}")
                     if native:
                         await c.command('Page.addScriptToEvaluateOnNewDocument',source="window.__nativeCalls=[];window.__prefs={appearance:'matte',animations:false,haptics:true};window.PocketPadNative={getPreferences(){return JSON.stringify(window.__prefs)},savePreferences(value){Object.assign(window.__prefs,JSON.parse(value))},connectionCue(state){window.__nativeCalls.push('cue-'+state)},tourCompleted(){return localStorage.getItem('pocketpad-tour-complete')==='1'},completeTour(){localStorage.setItem('pocketpad-tour-complete','1')},clickHaptic(){window.__nativeCalls.push('haptic')},hasMotion(){return true},getMotionMode(){return 'off'},getMotionPreferences(){return JSON.stringify(window.__gyroPrefs||{})},saveMotionPreferences(json){window.__gyroPrefs=JSON.parse(json)},setMotion(mode){window.__nativeCalls.push(mode)},recenter(){window.__nativeCalls.push('recenter')},fullscreen(){window.__nativeCalls.push('fullscreen')},home(){window.__nativeCalls.push('home')}}")
                     await c.command('Emulation.setDeviceMetricsOverride',width=width,height=height,deviceScaleFactor=1,mobile=mobile)
@@ -275,7 +287,7 @@ async def main():
                 await native.ws.close()
                 assert not desktop.errors,desktop.errors
                 assert not phone.errors,phone.errors
-                print('PASS: editor, resizing, phone sizing, presets, QR, driving throttle/steering/brake/camera on both layouts, mode persistence/release, multitouch, native touchpad, click/release, Android bridge, offline preview, gyro controls, and app pause.')
+                print('PASS: editor, resizing, phone sizing, presets, QR, driving throttle/steering/brake/camera on both layouts, on-foot default and mode switching/release, multitouch, native touchpad, click/release, Android bridge, offline preview, gyro controls, and app pause.')
                 await desktop.ws.close();await phone.ws.close()
         finally:
             process.terminate()
