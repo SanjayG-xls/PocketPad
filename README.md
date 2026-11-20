@@ -1,6 +1,6 @@
 <div align="center">
 
-![PocketPad — your phone, your controller](docs/images/banner.svg)
+![PocketPad — your phone, your controller, plus a virtual mouse and keyboard for your PC](docs/images/banner.svg)
 
 ### Your phone. Your controller. Your touchpad.
 
