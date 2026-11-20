@@ -6,7 +6,7 @@ import zipfile
 root=Path(__file__).resolve().parents[1]
 with zipfile.ZipFile(root/'PocketPad-Android.apk') as apk:
     assert apk.testzip() is None
-    for file in ['index.html','app.js','style.css','experience.js','experience.css','presets.json']:
+    for file in ['index.html','app.js','style.css','experience.js','experience.css','remote.js','remote.css','presets.json']:
         assert apk.read('assets/controller/'+file)==(root/'web'/file).read_bytes(),f'Stale bundled UI: {file}'
     assert apk.read('classes.dex').startswith(b'dex\n')
     assert 'resources.arsc' in apk.namelist()

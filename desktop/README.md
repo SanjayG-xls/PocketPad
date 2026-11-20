@@ -1,6 +1,10 @@
-# PocketPad Desktop 2.1
+# PocketPad Desktop 2.2
 
 A native WPF Windows application with a self-contained installer. The desktop UI does not use a browser, WebView, Electron or a local web page. The existing Python service continues to serve the phone controller and virtual gamepad bridge in the background; it opens no console or browser during desktop use.
+
+## New in Desktop 2.2
+
+The phone now includes **Virtual mouse & keyboard**: a black touchpad, mobile keyboard typing, scrolling, pinch zoom, app switching and virtual desktop gestures. Use **Mouse & keyboard** in the phone toolbar or the Android 1.3 home shortcut. Mouse/keyboard output does not require the virtual gamepad driver.
 
 ## Install
 

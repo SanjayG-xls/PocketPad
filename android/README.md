@@ -12,6 +12,12 @@ The installable application is `../PocketPad-Android.apk`. Android 8.0 or newer 
 
 **Enter pairing link** accepts the full `/play?token=...` URL from the PC. **Reconnect** remembers the last paired PC; scan again after a host restart changes the token. **Preview controllers** opens bundled PS5/Xbox layouts offline. Preview sends no inputs to a PC.
 
+## Virtual mouse & keyboard (1.3)
+
+Tap **Virtual mouse & keyboard** on the home screen to reconnect to a paired PC (or scan to pair), or **Mouse & keyboard** in the controller toolbar. The black screen is a relative touchpad, with a small button opening the Android keyboard for PC typing. Portrait and landscape are supported in this mode. Tap **?** for pointer speed, scroll direction and the full gesture guide. One finger moves/clicks/drags, two fingers scroll or pinch to zoom, three switch apps and four switch virtual desktops. The updated PC host is required; ViGEmBus is not required for mouse/keyboard mode.
+
+Install the 1.3 APK over the existing app for the new home shortcut, rotation and keyboard bridge. The identity and signing key are unchanged. Phone multi-touch and IME behavior still need physical-device validation.
+
 ## Native features
 
 Version **1.1** adds Matte black, OLED black and Translucent themes, richer animation by default, connection haptic cues, and an interactive first-use guide. The app identity and signing key remain the same, so it installs as an update to 1.0 while keeping preferences.

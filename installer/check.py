@@ -30,11 +30,13 @@ run(SETUP,'--silent','--test-install','--target',TARGET)
 assert json.loads((TARGET/'PocketPad.install.json').read_text())['appId']=='PocketPad.Desktop.Native'
 assert (TARGET/'PocketPad.exe').stat().st_size>30000,'Expected native application executable'
 assert (TARGET/'Uninstall.exe').exists()
+for name in ['desktop_input.py','web/remote.js','web/remote.css']:
+    assert (TARGET/name).read_bytes()==(ROOT/name).read_bytes(),f'Missing or stale desktop input component: {name}'
 assert (FIXTURE/'test-shortcuts/PocketPad.lnk').exists()
 assert (FIXTURE/'test-shortcuts/Uninstall PocketPad.lnk').exists()
 with winreg.OpenKey(winreg.HKEY_CURRENT_USER,KEY) as key:
     assert Path(winreg.QueryValueEx(key,'InstallLocation')[0])==TARGET
-    assert winreg.QueryValueEx(key,'DisplayVersion')[0]=='2.1'
+    assert winreg.QueryValueEx(key,'DisplayVersion')[0]=='2.2'
 run(TARGET/'PocketPad.exe','--smoke','--mock','--port','8896','--data-dir',DATA,'--output',OUTPUT)
 assert (OUTPUT/'result.txt').exists(),(OUTPUT/'error.txt').read_text() if (OUTPUT/'error.txt').exists() else 'Native smoke result missing'
 saved=digest(DATA/'presets.json')

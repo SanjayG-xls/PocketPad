@@ -29,7 +29,7 @@ for directory in ['compiled','gen','classes','dex']:
     (BUILD/directory).mkdir(parents=True,exist_ok=True)
 assets=SRC/'assets/controller'
 assets.mkdir(parents=True,exist_ok=True)
-for name in ['index.html','app.js','style.css','experience.js','experience.css','presets.json','pocketpad-mark.svg']:
+for name in ['index.html','app.js','style.css','experience.js','experience.css','remote.js','remote.css','presets.json','pocketpad-mark.svg']:
     shutil.copyfile(PROJECT/'web'/name,assets/name)
 run(aapt,'compile','--dir',SRC/'res','-o',BUILD/'resources.zip')
 run(aapt,'link','-o',BUILD/'unsigned.apk','-I',android,'--manifest',SRC/'AndroidManifest.xml',

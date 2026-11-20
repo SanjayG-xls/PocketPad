@@ -21,7 +21,7 @@ def compile(target,uninstall=False):
     cmd+=[str(DESKTOP/'Branding.cs'),str(ROOT/'Setup.cs')]
     subprocess.run(cmd,check=True)
 compile(BUILD/'Uninstall.exe',True)
-files=[PROJECT/name for name in ['PocketPad.exe','PocketPad.exe.config','host.py','PocketPad-Android.apk','README.md','AUTHORS.md','CHANGELOG.md','THIRD_PARTY_NOTICES.md','requirements.txt','requirements-lock.txt']]
+files=[PROJECT/name for name in ['PocketPad.exe','PocketPad.exe.config','host.py','desktop_input.py','PocketPad-Android.apk','README.md','AUTHORS.md','CHANGELOG.md','THIRD_PARTY_NOTICES.md','requirements.txt','requirements-lock.txt']]
 files+=[DESKTOP/'Shell.xaml']
 files.extend(p for p in (DESKTOP/'assets').iterdir() if p.suffix.lower() in ('.png','.ico'))
 for folder in ['runtime','web','docs']:

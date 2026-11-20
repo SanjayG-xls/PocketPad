@@ -22,6 +22,10 @@ import qrcode
 import qrcode.image.svg
 
 ROOT = Path(__file__).resolve().parent
+# The bundled Python runtime does not add the script directory to sys.path.
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+from desktop_input import DesktopInput
 BUTTONS = {
     'A': 0x1000, 'B': 0x2000, 'X': 0x4000, 'Y': 0x8000,
     'LB': 0x0100, 'RB': 0x0200, 'BACK': 0x0020, 'START': 0x0010,
@@ -258,6 +262,7 @@ class Host:
         self.port = port
         self.token = secrets.token_urlsafe(18)
         self.pad = Gamepad(mock)
+        self.desktop = DesktopInput(mock)
         self.state = neutral()
         self.last_input = 0
         self.owner = None
@@ -290,8 +295,9 @@ class Host:
 
     def status(self):
         phones = [peer for peer in self.peers.values() if peer.get('role') == 'controller']
-        return {'type': 'status', 'version': '2.1', 'desktopApi': 1, 'driver': self.pad.device is not None, 'mock': self.pad.mock,
-                'output': self.pad.output,
+        return {'type': 'status', 'version': '2.2', 'desktopApi': 1, 'driver': self.pad.device is not None, 'mock': self.pad.mock,
+                'output': self.pad.output, 'desktopInput': 1,
+                'inputMode': self.peers.get(self.owner, {}).get('inputMode', 'gamepad'),
                 'driverError': self.pad.error, 'connected': self.owner is not None,
                 'paired': bool(phones), 'playing': self.owner is not None,
                 'controllerName': self.peers.get(self.owner, phones[0] if phones else {}).get('name', ''),
@@ -305,6 +311,7 @@ class Host:
     def reset(self):
         self.state = neutral()
         self.pad.apply(self.state)
+        self.desktop.reset()
 
     async def broadcast(self, message, monitors_only=False):
         for ws, info in list(self.peers.items()):
@@ -402,7 +409,7 @@ class Host:
             raise web.HTTPForbidden(text='Scan the current QR code on the PC.')
         ws = web.WebSocketResponse(heartbeat=10, max_msg_size=128*1024)
         await ws.prepare(request)
-        self.peers[ws] = {'role': role, 'name': request.query.get('name', 'Phone controller')[:60]}
+        self.peers[ws] = {'role': role, 'name': request.query.get('name', 'Phone controller')[:60], 'inputMode': 'gamepad'}
         await ws.send_json(self.config())
         await ws.send_json(self.status())
         try:
@@ -428,10 +435,25 @@ class Host:
                         self.owner = None
                         await ws.send_json({'type': 'released'})
                         await self.broadcast(self.status())
-                    elif kind == 'input' and self.owner is ws:
-                        self.state = clean_input(data.get('state'))
+                    elif kind == 'input_mode' and self.owner is ws:
+                        mode = data.get('mode')
+                        if mode not in ('desktop', 'gamepad'):
+                            raise ValueError('Unknown input mode')
+                        self.reset()
+                        self.peers[ws]['inputMode'] = mode
                         self.last_input = time.monotonic()
-                        self.pad.apply(self.state)
+                        await ws.send_json({'type': 'input_mode', 'mode': mode})
+                        await self.broadcast(self.status())
+                    elif kind == 'desktop' and self.owner is ws:
+                        if self.peers[ws]['inputMode'] != 'desktop':
+                            raise ValueError('Open Virtual mouse & keyboard first')
+                        self.desktop.apply(data)
+                        self.last_input = time.monotonic()
+                    elif kind == 'input' and self.owner is ws:
+                        self.last_input = time.monotonic()
+                        if self.peers[ws]['inputMode'] == 'gamepad':
+                            self.state = clean_input(data.get('state'))
+                            self.pad.apply(self.state)
                     elif kind in ('save', 'activate', 'delete'):
                         slot = data.get('slot')
                         if type(slot) is not int or slot not in range(4):
@@ -459,7 +481,7 @@ class Host:
                         await ws.send_json({'type': 'saved', 'action': kind})
                     elif kind == 'disconnect' and role == 'monitor' and self.owner:
                         await self.owner.close(code=1000, message=b'Disconnected from PC')
-                except (ValueError, TypeError, AttributeError, KeyError) as exc:
+                except (ValueError, TypeError, AttributeError, KeyError, UnicodeError) as exc:
                     await ws.send_json({'type': 'error', 'message': str(exc)})
         finally:
             self.peers.pop(ws, None)

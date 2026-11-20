@@ -13,6 +13,7 @@ import android.hardware.*;
 import android.net.Uri;
 import android.os.*;
 import android.view.*;
+import android.view.inputmethod.InputMethodManager;
 import android.webkit.*;
 import android.widget.*;
 import org.json.JSONObject;
@@ -34,7 +35,7 @@ public final class MainActivity extends Activity implements SensorEventListener 
     private Sensor motionSensor,gyroSensor;
     private String origin="", motionMode="off";
     private String practiceMotionBefore=null;
-    private boolean active=false, centered=false, connecting=false;
+    private boolean active=false, centered=false, connecting=false, desktopRequested=false;
     private float centerRoll,centerPitch,currentRoll,currentPitch;
     private float yawRate,pitchRate;
     private long lastGyro=0;
@@ -93,10 +94,14 @@ public final class MainActivity extends Activity implements SensorEventListener 
         ImageView mark=new ImageView(this);homeMark=mark;mark.setImageResource(R.drawable.ic_mark);LinearLayout.LayoutParams iconLp=new LinearLayout.LayoutParams(dp(160),dp(160));iconLp.topMargin=dp(36);content.addView(mark,iconLp);
         TextView title=text("Connect to your PC",27,TEXT);title.setGravity(Gravity.CENTER);title.setTypeface(Typeface.create("sans-serif-medium",0));add(content,title,-2,12);
         TextView description=text("Open PocketPad on your PC. Connect both devices to the same network, then scan its QR code.",13,MUTED);description.setGravity(Gravity.CENTER);description.setLineSpacing(dp(4),1);add(content,description,-2,13);
-        add(content,button("Scan QR code",true,this::scan),54,30);
+        add(content,button("Scan QR code",true,()->{desktopRequested=false;scan();}),54,30);
         String previous=prefs.getString("last_url","");
         if(!previous.isEmpty())add(content,button("Reconnect to "+Uri.parse(previous).getHost(),false,()->connect(previous)),52,12);
-        add(content,button("Enter pairing link",false,this::manualEntry),52,12);
+        add(content,button("Virtual mouse & keyboard",false,()->{
+            desktopRequested=true;
+            if(!previous.isEmpty())connect(previous);else scan();
+        }),52,12);
+        add(content,button("Enter pairing link",false,()->{desktopRequested=false;manualEntry();}),52,12);
         Button preview=button("Preview controllers",false,()->openController("https://pocketpad.local/play?demo=1",true));add(content,preview,52,12);
         add(content,button("Getting-started walkthrough",false,()->openController("https://pocketpad.local/play?demo=1&tour=1",true)),48,18);
         homeStatus=text("Wi-Fi · USB tethering · Bluetooth PAN",11,MUTED);homeStatus.setGravity(Gravity.CENTER);homeStatus.setLineSpacing(dp(4),1);add(content,homeStatus,-2,20);
@@ -124,7 +129,7 @@ public final class MainActivity extends Activity implements SensorEventListener 
     private void connect(String input){
         if(connecting)return;
         final Uri uri;
-        try{uri=Uri.parse(input.trim());if(!"http".equals(uri.getScheme())&&!"https".equals(uri.getScheme()))throw new Exception();if(uri.getHost()==null||!"/play".equals(uri.getPath())||uri.getQueryParameter("token")==null)throw new Exception();}
+        try{Uri parsed=Uri.parse(input.trim());if(!"http".equals(parsed.getScheme())&&!"https".equals(parsed.getScheme()))throw new Exception();if(parsed.getHost()==null||!"/play".equals(parsed.getPath())||parsed.getQueryParameter("token")==null)throw new Exception();uri=desktopRequested?parsed.buildUpon().appendQueryParameter("input","desktop").build():parsed;desktopRequested=false;}
         catch(Exception e){status("That is not a PocketPad pairing link. Scan the QR code on your PC.");return;}
         connecting=true;status("Connecting to "+uri.getHost()+"…");connectionHaptic("connecting");
         network.execute(()->{
@@ -147,7 +152,7 @@ public final class MainActivity extends Activity implements SensorEventListener 
         Uri address=Uri.parse(url);origin=address.getScheme()+"://"+address.getEncodedAuthority();
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);hideBars();
         browser=new WebView(this);browser.setBackgroundColor(BG);browser.setOverScrollMode(View.OVER_SCROLL_NEVER);
-        WebSettings settings=browser.getSettings();settings.setJavaScriptEnabled(true);settings.setDomStorageEnabled(true);settings.setAllowFileAccess(false);settings.setAllowContentAccess(false);settings.setMediaPlaybackRequiresUserGesture(true);settings.setSupportMultipleWindows(false);settings.setUserAgentString(settings.getUserAgentString()+" PocketPadAndroid/1.2");
+        WebSettings settings=browser.getSettings();settings.setJavaScriptEnabled(true);settings.setDomStorageEnabled(true);settings.setAllowFileAccess(false);settings.setAllowContentAccess(false);settings.setMediaPlaybackRequiresUserGesture(true);settings.setSupportMultipleWindows(false);settings.setUserAgentString(settings.getUserAgentString()+" PocketPadAndroid/1.3");
         browser.addJavascriptInterface(new NativeBridge(),"PocketPadNative");
         browser.setWebChromeClient(new WebChromeClient());
         browser.setWebViewClient(new WebViewClient(){
@@ -270,6 +275,12 @@ public final class MainActivity extends Activity implements SensorEventListener 
         @JavascriptInterface public void setMotion(String mode){if(!mode.equals("off")&&!mode.equals("steer")&&!mode.equals("aim"))return;main.post(()->{practiceMotionBefore=null;motionMode=mode;centered=false;prefs.edit().putString("motion",mode).apply();registerMotion();});}
         @JavascriptInterface public void recenter(){main.post(()->centered=false);}
         @JavascriptInterface public void fullscreen(){main.post(MainActivity.this::hideBars);}
+        @JavascriptInterface public void setInputMode(String mode){
+            if(!mode.equals("desktop")&&!mode.equals("gamepad"))return;
+            main.post(()->setRequestedOrientation(mode.equals("desktop")?ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR:ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE));
+        }
+        @JavascriptInterface public void showKeyboard(){main.post(()->{if(browser==null)return;browser.requestFocus();((InputMethodManager)getSystemService(INPUT_METHOD_SERVICE)).showSoftInput(browser,InputMethodManager.SHOW_IMPLICIT);});}
+        @JavascriptInterface public void hideKeyboard(){main.post(()->{if(browser!=null)((InputMethodManager)getSystemService(INPUT_METHOD_SERVICE)).hideSoftInputFromWindow(browser.getWindowToken(),0);});}
         @JavascriptInterface public void home(){main.post(MainActivity.this::showHome);}
     }
     @Override protected void onResume(){super.onResume();active=true;centered=false;if(browser!=null){browser.onResume();getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);hideBars();registerMotion();}else animateHomeMark();}

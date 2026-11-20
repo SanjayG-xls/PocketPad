@@ -2,14 +2,14 @@
 
 ![PocketPad — your phone, your controller](docs/images/banner.svg)
 
-### Your phone. Your layout. Your next game.
+### Your phone. Your controller. Your touchpad.
 
-A customizable Android controller for PC games, paired with a native Windows studio.
+A customizable gamepad, virtual touchpad and keyboard for your PC, all on your Android phone.
 
 **Made by [Sanjay](https://github.com/SanjayG-xls).**
 
-[![Windows desktop](https://img.shields.io/badge/Windows-Desktop_2.1-a7adff?style=flat-square&labelColor=16181f)](https://github.com/SanjayG-xls/PocketPad/releases/latest)
-[![Android companion](https://img.shields.io/badge/Android-Companion_1.2-a7adff?style=flat-square&labelColor=16181f)](https://github.com/SanjayG-xls/PocketPad/releases/latest)
+[![Windows desktop](https://img.shields.io/badge/Windows-Desktop_2.2-a7adff?style=flat-square&labelColor=16181f)](https://github.com/SanjayG-xls/PocketPad/releases/latest)
+[![Android companion](https://img.shields.io/badge/Android-Companion_1.3-a7adff?style=flat-square&labelColor=16181f)](https://github.com/SanjayG-xls/PocketPad/releases/latest)
 [![Local play](https://img.shields.io/badge/Play-Over_your_local_network-8dc9b7?style=flat-square&labelColor=16181f)](#connect-your-way)
 
 **[Download for Windows](https://github.com/SanjayG-xls/PocketPad/releases/latest/download/PocketPad-Setup.exe)** · **[Get the Android app](https://github.com/SanjayG-xls/PocketPad/releases/latest/download/PocketPad-Android.apk)** · **[Portable edition](https://github.com/SanjayG-xls/PocketPad/releases/latest/download/PocketPad-Portable.zip)**
@@ -36,6 +36,7 @@ The PC app is a **native WPF application** with its own installer. The Android c
 | **Four layout slots** | Two factory presets and two custom slots, plus JSON import/export for backups. |
 | **Gyro aiming and steering** | A visible on/off button, GTA V aiming mode, tilt steering, sensitivity, invert axes and recenter. |
 | **Two-finger touchpad** | Independent contacts and touchpad click with DS4 output; mouse control with Xbox output. |
+| **Virtual mouse & keyboard** | A black phone touchpad, mobile keyboard typing, scrolling, pinch zoom, app switching and virtual desktop gestures. Works without a virtual gamepad driver. |
 | **A matching dark interface** | Matte black, OLED black and translucent themes, launch animations, transitions and connection effects. |
 | **Motion on your terms** | Rich UI animations are enabled by default and can be switched off separately from gameplay gyro. |
 | **A smoother first session** | An interactive walkthrough, offline controller preview, pairing QR and a dedicated mobile download page. |
@@ -49,9 +50,26 @@ The PC app is a **native WPF application** with its own installer. The Android c
 4. **Pair locally.** Put your phone and PC on the same Wi-Fi or hotspot. Open **Connect phone** on the PC, select the correct network address, then use **Scan QR code** in the Android app.
 5. **Choose a layout and play.** Turn your phone sideways, tap **Start controller**, and keep the PC app running. Choose Xbox/XInput or PlayStation/DS4 output before starting your game.
 
-**Requirements:** Windows 10/11 x64 with .NET Framework 4.8; Android 8.0+ for the companion; a reachable local network; and ViGEmBus for virtual gamepad output. The Windows downloads include the Python runtime and dependencies, so no separate Python installation is needed to play.
+**Requirements:** Windows 10/11 x64 with .NET Framework 4.8; Android 8.0+ for the companion; a reachable local network; and ViGEmBus for virtual gamepad output. Virtual mouse & keyboard does not require ViGEmBus. The Windows downloads include the Python runtime and dependencies, so no separate Python installation is needed to play.
 
 > Prefer a portable app? Extract the **entire** portable ZIP and run `PocketPad.exe`. Keep its runtime and supporting folders together. The driver is still required for gamepad emulation.
+
+## New in 2.2: your PC, at your fingertips
+
+![PocketPad virtual touchpad and keyboard](docs/images/virtual-touchpad-hero.png)
+
+[See the release](https://github.com/SanjayG-xls/PocketPad/releases/tag/v2.2.0) · [Gesture and keyboard guide](docs/USER_GUIDE.md#virtual-mouse--keyboard)
+
+### Use your phone as a PC touchpad
+
+Pair as usual, then tap **Mouse & keyboard** in the phone controller toolbar. Android 1.3 also has a **Virtual mouse & keyboard** home-screen button. Tap **Start controller** to enable input. The screen becomes a black touchpad; the small keyboard button opens your phone's keyboard to type into the focused PC app. The keyboard strip includes Ctrl, Alt, Shift, Win, arrows and function keys. Tap **?** for the full gesture guide and pointer/scroll settings; **Gamepad** returns to the controller.
+
+- One finger moves the pointer. Tap/double-tap to click/double-click; hold and move, or double-tap and move, to drag or select text.
+- Two fingers scroll vertically/horizontally; a two-finger tap right-clicks. Pinch/spread zooms in apps supporting Ctrl + mouse wheel.
+- Three fingers swipe left/right to switch apps, up for Task View, down to show the desktop; tap for Search.
+- Four fingers swipe left/right to switch virtual desktops, up for Task View, down for the desktop; tap for Quick Settings/Action Center.
+
+The phone must support the relevant number of simultaneous touches. These gestures send Windows mouse/keyboard shortcuts; they do not replace Windows Precision Touchpad hardware or its custom gesture settings. Pause, backgrounding, disconnect and the input watchdog release held mouse buttons. Keyboard text is sent to the focused PC app and is not saved by PocketPad. Windows may block input to apps running at a higher privilege level.
 
 ## Fine aim with your phone
 
@@ -119,7 +137,7 @@ The desktop, Android app, installer, input pipeline and shared UI have automated
 | [Windows desktop](desktop/README.md) | Native app, install/update/uninstall and saved data. |
 | [Android companion](android/README.md) | APK installation, sensors, permissions and build details. |
 | [Build from source](docs/BUILDING.md) | Windows and Android prerequisites, builds and checks. |
-| [Release notes](CHANGELOG.md) | Desktop 2.1 / Android 1.2 release details. |
+| [Release notes](CHANGELOG.md) | Desktop 2.2 / Android 1.3 release details. |
 | [Third-party notices](THIRD_PARTY_NOTICES.md) | Runtime, libraries, driver and upstream acknowledgements. |
 
 ```text

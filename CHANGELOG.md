@@ -1,5 +1,17 @@
 # Release notes
 
+## v2.2.0 — Virtual Touchpad & Keyboard · Desktop 2.2 + Android 1.3
+
+- Black fullscreen phone touchpad with a mobile keyboard button and portrait/landscape support.
+- Pointer movement, taps, double-click, hold/double-tap drag, right/middle click, two-axis scroll and pinch zoom.
+- Three-finger app switching, Task View, desktop and Search; four-finger virtual desktops and Quick Settings.
+- Unicode/emoji, IME composition, recent-text autocorrection and keyboard shortcuts with editing/navigation/function keys.
+- Driver-independent Windows mouse/keyboard output over the existing paired phone connection. Mode changes, pause, disconnect and the watchdog release mouse holds.
+- Android home shortcut, native keyboard bridge and updated APK/package checks.
+- GTA V Driving / On foot toggle, proportional left-stick pedals/steering and right-stick camera; new sessions start on foot.
+- Regression checks cover desktop-mode ownership, Windows input packet layout, gesture recognition, text composition and gamepad isolation. Physical phone/IME feel and application-specific zoom remain manual checks.
+
+
 ## v2.1.0 — PocketPad Desktop 2.1 + Android 1.2
 
 First GitHub release. Made by **Sanjay**.

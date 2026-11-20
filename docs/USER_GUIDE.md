@@ -1,8 +1,8 @@
-# PocketPad Desktop 2.1
+# PocketPad Desktop 2.2
 
 A native Windows desktop application that turns your phone into an Xbox or PlayStation-compatible PC gamepad. The PC interface runs in its own application window, without a browser or WebView. The Android companion and optional phone browser controller connect to the local background engine. Gameplay connections remain on your local network. Python and its dependencies are included.
 
-Desktop 2.1 adds a branded setup wizard, native dark UI, original icons and setup graphics, launch animation, page transitions, shortcuts, Windows Installed apps registration and a matching uninstaller. It keeps the larger black DualSense/Xbox layouts and the Android companion. Existing saved layouts can be migrated into your Windows profile on first install.
+Desktop 2.2 adds a virtual touchpad and keyboard to the existing phone controller. Scroll, pinch to zoom, switch apps and type with your phone keyboard. The native Windows studio, installer and saved controller layouts remain available. Mouse/keyboard mode works without the virtual gamepad driver.
 
 ## Start playing
 
@@ -18,7 +18,29 @@ If the phone cannot open the link, try another PC network address in the pairing
 
 Each controller session starts in **On foot** mode: L moves your character and R controls the camera. After entering a vehicle, tap **On foot** in the toolbar to enable **Driving**: L up sends proportional RT/R2 acceleration, L left/right steers, and L down sends proportional LT/L2 brake/reverse. R controls the camera. Steering and pedals use independent drag distances, so turning does not reduce throttle. Release L to release both pedals and center the wheel. After leaving the vehicle, tap **Driving** to restore **On foot** movement. PocketPad cannot detect the game's vehicle state, so switch modes manually; pedal mappings can trigger attacks while on foot. Driving mode is not restored when reopening the controller. Switching modes, pausing, and disconnecting release active inputs.
 
-Desktop **2.1** adds a permanent **Mobile app** sidebar page with the Android download QR, instructions, copy-link and Save APK actions. The companion update is **Android 1.2**; install the updated APK to get the new native settings, connection haptics and walkthrough support.
+Desktop **2.1** adds a permanent **Mobile app** sidebar page with the Android download QR, instructions, copy-link and Save APK actions. The companion update is **Android 1.3**; install the updated APK to get the new native settings, connection haptics and walkthrough support.
+
+## Virtual mouse & keyboard
+
+Use **Mouse & keyboard** in the phone toolbar, or **Virtual mouse & keyboard** on the Android 1.3 home screen. Pair with the same PC QR/link, then tap **Start controller**. No ViGEmBus driver is needed for this mode. A black surface fills the phone in portrait or landscape. The keyboard button opens the phone keyboard; text goes into whichever PC app currently has focus. Tap **Gamepad** to return to the controller. Pause/Resume uses the same paired connection.
+
+| Gesture | PC action |
+| --- | --- |
+| One-finger movement | Move the pointer. |
+| Tap / double tap | Left click / double click. |
+| Hold, then move; or double-tap and move | Hold left mouse button to drag/select; lift to release. |
+| Two-finger tap | Right click. |
+| Two-finger slide | Scroll vertically or horizontally; natural direction is adjustable. |
+| Pinch / spread | Zoom out / in using Ctrl + wheel, in apps that support it. |
+| Three-finger left / right | Switch to the next / previous app with Alt + Tab / Alt + Shift + Tab. |
+| Three-/four-finger up / down | Task View / show desktop. |
+| Three-finger tap | Windows Search. |
+| Four-finger left / right | Next / previous Windows virtual desktop. |
+| Four-finger tap | Quick Settings (Windows 11) / Action Center (Windows 10). |
+
+The **?** panel also provides explicit left/middle/right clicks and pointer speed. The keyboard strip has one-use Ctrl/Alt/Shift/Win modifiers, navigation, editing and F1–F12 keys. For example, tap Ctrl then type C to copy in the PC app. Phone keyboard composition, emoji, paste and recent-text autocorrection are forwarded; PocketPad does not keep a typed-text log. Keyboard text and mouse actions require the active paired phone and desktop mode; gamepad output stays neutral while using this mode.
+
+Windows Precision Touchpad device settings do not configure these remote gestures. Three/four-finger availability depends on the phone and OS. Windows does not allow a normal app to inject into a higher-privilege app or the secure UAC screen. Actual phone keyboard, gesture feel and app-specific zoom still require physical-device testing.
 
 ## Appearance and getting started
 

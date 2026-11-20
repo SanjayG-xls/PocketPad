@@ -1,4 +1,5 @@
 import {initializeExperience,offerWalkthrough,preferences,connectionState} from './experience.js';
+import {initializeRemote} from './remote.js?v=1';
 const $ = (id) => document.getElementById(id);
 const clone = (x) => structuredClone(x);
 const clamp = (x, lo, hi) => Math.max(lo, Math.min(hi, x));
@@ -34,6 +35,7 @@ let phoneScale=1, touchSerial=0, pointerDelta={dx:0,dy:0}, lastTouch=new Map(), 
 // The game does not report whether the player is in a vehicle. Start every
 // controller session on foot so a saved pedal mapping cannot trigger attacks.
 let drivingMode=false;
+let desktopMode=new URLSearchParams(location.search).get('input')==='desktop',remoteControls;
 try{phoneScale=clamp(Number(localStorage.getItem('pocketpad-phone-scale'))||1,.65,1.5);}catch{}
 
 function icon(mapping,theme='xbox'){
@@ -81,6 +83,7 @@ function connect() {
     if (msg.type==='pong') {latency=Math.max(0,Math.round(performance.now()-msg.time));updatePlayerStatus();}
     if (msg.type==='claimed') {
       claimed=playing=true; $('playerOverlay').hidden=true; $('exitPlayer').textContent='Pause';
+      send({type:'input_mode',mode:desktopMode?'desktop':'gamepad'});
       clearInputs();connectionState('ready');acquireWakeLock();updatePlayerStatus();
     }
     if (msg.type==='released') {claimed=playing=false;resumeWanted=false;connectionState('paused');showPlayerOverlay('Paused. Tap below when you’re ready.');}
@@ -105,6 +108,7 @@ function updateHostStatus(){
 }
 function updatePlayerStatus(){
   $('playerStatus').textContent=demoMode?'Preview · no PC input':!serverOnline?'Reconnecting…':!claimed?'Connected to PC':`${info?.driver?(info.output==='ds4'?'PlayStation':'Xbox'):info?.mock?'Test mode':'Driver needed'}${latency===null?'':` · ${latency} ms`}`;
+  remoteControls?.status(demoMode?'Preview · no PC input':!serverOnline?'Reconnecting…':!claimed?'Connected · paused':`Mouse & keyboard${latency===null?'':` · ${latency} ms`}`);
 }
 function updateStatus(status){
   if(info)Object.assign(info,status);
@@ -384,6 +388,7 @@ function renderMonitor(state){
 // Phone controls send complete snapshots, so dropping a packet cannot leave a button held.
 function mergedInput(){
   const out=neutral(),buttons=new Set();
+  if(desktopMode)return out;
   for(const s of sources.values()){
     for(const b of s.buttons||[])buttons.add(b);
     for(const key of axisNames){const value=s[key]||0;if(Math.abs(value)>Math.abs(out[key]))out[key]=value;}
@@ -405,6 +410,7 @@ function transmit(){
   $('playerSurface').querySelectorAll('.touchpad').forEach(el=>el.classList.toggle('clicked',lastState.touchClick));
 }
 function clearInputs(transmitNow=true){
+  remoteControls?.reset();
   sources.clear();lastTouch.clear();pointerDelta={dx:0,dy:0};touchPulse=false;resetMotion();lastState=neutral();
   $('playerSurface').querySelectorAll('.touch-marker').forEach(el=>el.remove());
   $('playerSurface').querySelectorAll('.control').forEach(el=>{el.classList.remove('pressed');const knob=el.querySelector('.stick-knob');if(knob)knob.style.transform='';const fill=el.querySelector('.control-fill');if(fill){if(el.classList.contains('slider'))fill.style.width='0%';else fill.style.height='0%';}});
@@ -506,9 +512,19 @@ async function enterFullscreen(){
 function renderPlayerPresets(){
   $('playerPresetMenu').replaceChildren();presets.forEach((p,i)=>{if(!p)return;const b=document.createElement('button');b.textContent=p.name;b.className=i===active?'active':'';b.onclick=()=>{clearInputs();send({type:'activate',slot:i});$('playerPresetMenu').hidden=true;};$('playerPresetMenu').append(b);});
 }
+function setDesktopMode(enabled){
+  if(enabled&&info&&!demoMode&&!info.desktopInput){toast('Restart the updated PC app to enable Virtual mouse & keyboard.');return;}
+  clearInputs();desktopMode=enabled;
+  if(claimed)send({type:'input_mode',mode:enabled?'desktop':'gamepad'});
+  for(const id of ['playerPresetMenu','playerSizeMenu','playerMotionMenu','playerSettingsMenu'])$(id).hidden=true;
+  remoteControls.setEnabled(enabled);updatePlayerStatus();
+}
 function setupPlayer(){
   $('studio').hidden=true;$('player').hidden=false;document.body.style.overflow='hidden';
   initializeExperience();
+  remoteControls=initializeRemote({send,ready:()=>playing&&claimed,changeMode:setDesktopMode,pause:()=>$('exitPlayer').click(),toast,bridge:nativeBridge});
+  remoteControls.setEnabled(desktopMode);
+  $('playerRemoteButton').onclick=()=>setDesktopMode(true);
   const refreshDriving=()=>{
     $('playerDrivingToggle').textContent=drivingMode?'Driving':'On foot';
     $('playerDrivingToggle').setAttribute('aria-pressed',String(drivingMode));
@@ -567,7 +583,7 @@ function setupPlayer(){
     $('motionRecenter').onclick=()=>{resetMotion();nativeBridge.recenter();transmit();toast('Gyro centered.');};
     refreshMotion();
     window.addEventListener('pocketpad-motion',e=>{
-      if(motionMode==='off'||!playing)return;
+      if(motionMode==='off'||!playing||desktopMode)return;
       lastMotionEvent=performance.now();
       const roll=clamp(Number(e.detail?.roll)||0,-180,180),pitch=clamp(Number(e.detail?.pitch)||0,-180,180);
       const deadzone=v=>Math.abs(v)<.035?0:clamp(v,-1,1);
@@ -600,11 +616,11 @@ function setupPlayer(){
 async function boot(){
   if(isPlayer)setupPlayer();else setupEditor();
   if(demoMode){
-    try{presets=await(await fetch('/assets/presets.json')).json();presets=[...presets,null,null];active=1;info={version:'2.1',mock:true,driver:false,connected:false,output:'ds4',input:neutral()};serverOnline=true;onConfig({presets,active});updateStatus(info);connectionState('preview');showPlayerOverlay('Offline preview. Explore both controller layouts without connecting to a PC.');}
+    try{presets=await(await fetch('/assets/presets.json')).json();presets=[...presets,null,null];active=1;info={version:'2.2',mock:true,driver:false,connected:false,output:'ds4',input:neutral()};serverOnline=true;onConfig({presets,active});updateStatus(info);connectionState('preview');showPlayerOverlay('Offline preview. Explore both controller layouts without connecting to a PC.');}
     catch{showPlayerOverlay('Preview assets could not load. Return to the app home screen.');}
     return;
   }
-  try{const response=await fetch('/api/info');if(!response.ok)throw Error();info=await response.json();if(!['1.1','2.0','2.1'].includes(info.version))toast('Restart PocketPad to load the new presets and touchpad support.');if(!isPlayer)setupPairing();updateStatus(info);connect();}
+  try{const response=await fetch('/api/info');if(!response.ok)throw Error();info=await response.json();if(!['1.1','2.0','2.1','2.2'].includes(info.version))toast('Restart PocketPad to load the new presets and touchpad support.');if(isPlayer&&desktopMode&&!info.desktopInput){setDesktopMode(false);toast('Update and restart the PC app to use Virtual mouse & keyboard.');}if(!isPlayer)setupPairing();updateStatus(info);connect();}
   catch{if(isPlayer)showPlayerOverlay('Could not reach the PC host. Open the current QR code again.');else toast('Could not reach the local host. Refresh after starting PocketPad.');}
   setInterval(()=>{if(socket?.readyState===WebSocket.OPEN){pingTime=performance.now();socket.send(JSON.stringify({type:'ping',time:pingTime}));}},1500);
 }

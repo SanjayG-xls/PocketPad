@@ -9,6 +9,8 @@ import unittest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from aiohttp.test_utils import TestClient, TestServer
 from host import Host, Gamepad, clean_input, neutral, validate_layout, pack_ds4_report
+from desktop_input import DesktopInput, Input
+import ctypes
 
 
 async def until(ws, kind):
@@ -45,6 +47,65 @@ class HostChecks(unittest.IsolatedAsyncioTestCase):
         self.assertIn('<svg', await qr.text())
         bad = await self.client.get('/ws?role=controller&token=wrong')
         self.assertEqual(bad.status, 403)
+
+    async def test_desktop_ownership_mode_isolation_and_release(self):
+        events=[]
+        self.host.desktop.emit=lambda batch:events.extend(batch)
+        owner=await self.phone()
+        other=await self.phone()
+        monitor=await self.client.ws_connect('/ws?role=monitor')
+        await until(monitor,'status')
+        command={'type':'desktop','action':'button','button':'left','down':True}
+        for ws in (owner,other,monitor):
+            await ws.send_json(command)
+            await ws.send_json({'type':'ping'});await until(ws,'pong')
+        self.assertFalse(events)
+        await owner.send_json({'type':'claim'});await until(owner,'claimed')
+        await owner.send_json(command)
+        self.assertIn('Virtual mouse', (await until(owner,'error'))['message'])
+        await owner.send_json({'type':'input_mode','mode':'desktop'})
+        await until(owner,'input_mode')
+        await other.send_json(command)
+        await other.send_json({'type':'ping'});await until(other,'pong')
+        self.assertFalse(events)
+        await owner.send_json(command)
+        await owner.send_json({'type':'input','state':{'buttons':['A'],'rt':1}})
+        await owner.send_json({'type':'ping'});await until(owner,'pong')
+        self.assertEqual(self.host.state,neutral())
+        self.assertEqual(self.host.desktop.held,{'left'})
+        await asyncio.sleep(.75)
+        self.assertFalse(self.host.desktop.held,'Watchdog left mouse held')
+        self.assertEqual(events[-1].mouse.flags,4)
+        await owner.send_json(command)
+        await owner.send_json({'type':'input_mode','mode':'gamepad'});await until(owner,'input_mode')
+        self.assertFalse(self.host.desktop.held,'Mode switch left mouse held')
+        await owner.send_json({'type':'input_mode','mode':'desktop'});await until(owner,'input_mode')
+        await owner.send_json(command)
+        await owner.send_json({'type':'release'});await until(owner,'released')
+        self.assertFalse(self.host.desktop.held,'Pause left mouse held')
+        await owner.send_json({'type':'claim'});await until(owner,'claimed')
+        await owner.send_json(command)
+        await owner.send_json({'type':'ping'});await until(owner,'pong')
+        self.assertTrue(self.host.desktop.held)
+        await owner.close();await asyncio.sleep(.05)
+        self.assertFalse(self.host.desktop.held,'Disconnect left mouse held')
+
+    async def test_desktop_invalid_input_and_text(self):
+        events=[]
+        self.host.desktop.emit=lambda batch:events.extend(batch)
+        ws=await self.phone()
+        await ws.send_json({'type':'claim'});await until(ws,'claimed')
+        await ws.send_json({'type':'input_mode','mode':'desktop'});await until(ws,'input_mode')
+        for command in [dict(action='text',text='x'*2049),dict(action='key',key='Unknown'),
+                        dict(action='move',dx='wrong'),dict(action='scroll',dy=float('nan')),
+                        dict(action='gesture',name='unknown'),dict(action='button',down=1),
+                        dict(action='text',text='hello',modifiers=['Ctrl'])]:
+            await ws.send_json({'type':'desktop',**command})
+            await until(ws,'error')
+        self.assertFalse(events)
+        await ws.send_json(dict(type='desktop',action='text',text='Hi नमस्ते 😀'))
+        await ws.send_json({'type':'ping'});await until(ws,'pong')
+        self.assertTrue(events)
 
     async def test_android_install_page_and_download(self):
         page=await self.client.get('/android')
@@ -141,6 +202,30 @@ class HostChecks(unittest.IsolatedAsyncioTestCase):
 
 
 class MappingChecks(unittest.TestCase):
+    def test_desktop_windows_packets_unicode_chords_and_scroll(self):
+        desktop=DesktopInput(mock=True)
+        batches=[]
+        desktop.emit=lambda events:batches.append(events)
+        self.assertEqual(ctypes.sizeof(Input),40 if ctypes.sizeof(ctypes.c_void_p)==8 else 28)
+        desktop.apply(dict(action='move',dx=12,dy=-8))
+        self.assertEqual((batches[-1][0].mouse.dx,batches[-1][0].mouse.dy),(12,-8))
+        desktop.apply(dict(action='scroll',dx=120,dy=-240))
+        self.assertEqual([e.mouse.flags for e in batches[-1]],[0x1000,0x800])
+        self.assertEqual(ctypes.c_int32(batches[-1][1].mouse.data).value,-240)
+        desktop.apply(dict(action='text',text='A😀'))
+        packet=batches[-1]
+        self.assertEqual([e.keyboard.scan for e in packet[::2]],[65,0xd83d,0xde00])
+        self.assertEqual([e.keyboard.flags for e in packet],[4,6]*3)
+        desktop.apply(dict(action='gesture',name='app_previous'))
+        self.assertEqual([e.keyboard.vk for e in batches[-1]],[18,16,9,9,16,18])
+        self.assertEqual([bool(e.keyboard.flags&2) for e in batches[-1]],[False]*3+[True]*3)
+        desktop.apply(dict(action='key',key='C',modifiers=['Ctrl']))
+        self.assertEqual([e.keyboard.vk for e in batches[-1]],[17,67,67,17])
+        desktop.apply(dict(action='zoom',steps=2))
+        self.assertEqual(batches[-1][0].keyboard.vk,17)
+        self.assertEqual(batches[-1][1].mouse.data,240)
+        self.assertTrue(batches[-1][-1].keyboard.flags&2)
+
     def test_playstation_two_contacts_click_and_release_wire_format(self):
         state=clean_input(dict(buttons=['A','UP','RIGHT','GUIDE'],lx=.5,ly=-.5,rt=.75,
             touchClick=True,touches=[{'id':3,'x':0,'y':0},{'id':17,'x':1,'y':1}]))

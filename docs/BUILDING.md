@@ -47,6 +47,7 @@ The installer check uses an isolated workspace target and test registration. It 
 ```powershell
 .\runtime\python.exe tools\check_host.py
 .\runtime\python.exe tools\check_browser.py
+.\runtime\python.exe tools\check_remote.py
 .\runtime\python.exe tools\check_experience.py
 ```
 
@@ -58,6 +59,7 @@ Browser checks require installed Microsoft Edge. `check_device.py` and `check_ds
 - `android/`: native Java shell, sensor bridge, camera scanner, resources and build scripts.
 - `web/`: controller UI, first-use experience and factory presets.
 - `host.py`: local HTTP/WebSocket engine, pairing and virtual gamepad bridge.
+- `desktop_input.py`: Windows SendInput mouse/keyboard packets for the phone touchpad.
 - `installer/`: native setup/uninstaller and embedded-payload builder.
 - `tools/`: release orchestration, portable packaging and input checks.
 

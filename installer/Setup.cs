@@ -21,8 +21,8 @@ using PocketPad;
 [assembly:AssemblyProduct("PocketPad Desktop")]
 [assembly:AssemblyCompany("Sanjay")]
 [assembly:AssemblyCopyright("Copyright (c) 2026 Sanjay")]
-[assembly:AssemblyVersion("2.1.0.0")]
-[assembly:AssemblyFileVersion("2.1.0.0")]
+[assembly:AssemblyVersion("2.2.0.0")]
+[assembly:AssemblyFileVersion("2.2.0.0")]
 
 namespace PocketPadSetup {
     public sealed class InstallOptions {
@@ -83,7 +83,7 @@ namespace PocketPadSetup {
                         }
                     }
                 }
-                File.WriteAllText(Path.Combine(staging,"PocketPad.install.json"),new JavaScriptSerializer().Serialize(new Marker{appId=Id,version="2.1",test=options.Test}));
+                File.WriteAllText(Path.Combine(staging,"PocketPad.install.json"),new JavaScriptSerializer().Serialize(new Marker{appId=Id,version="2.2",test=options.Test}));
                 string backup=target+".backup-"+Guid.NewGuid().ToString("N");bool backedUp=false;
                 if(Directory.Exists(target)){if(!Directory.EnumerateFileSystemEntries(target).Any())Directory.Delete(target);else{MoveInstalledFolder(target,backup);backedUp=true;}}
                 try{MoveInstalledFolder(staging,target);}catch{if(backedUp&&!Directory.Exists(target))MoveInstalledFolder(backup,target);throw;}
@@ -91,7 +91,7 @@ namespace PocketPadSetup {
                 string personal=options.Test?Path.Combine(Path.GetDirectoryName(target),"test-user-data"):Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),"PocketPad","data");
                 string seed=Path.Combine(target,"seed","presets.json");if(File.Exists(seed)&&!File.Exists(Path.Combine(personal,"presets.json"))){Directory.CreateDirectory(personal);File.Copy(seed,Path.Combine(personal,"presets.json"));}
                 progress.Report(Tuple.Create(96.0,"Registering PocketPad in Windows"));
-                using(RegistryKey key=Registry.CurrentUser.CreateSubKey(Key(options.Test))){key.SetValue("DisplayName",options.Test?"PocketPad Desktop Test":"PocketPad Desktop");key.SetValue("DisplayVersion","2.1");key.SetValue("Publisher","Sanjay");key.SetValue("InstallLocation",target);key.SetValue("DisplayIcon",Path.Combine(target,"PocketPad.exe"));key.SetValue("UninstallString","\""+Path.Combine(target,"Uninstall.exe")+"\" --uninstall");key.SetValue("QuietUninstallString","\""+Path.Combine(target,"Uninstall.exe")+"\" --uninstall --silent");key.SetValue("InstallDate",DateTime.Now.ToString("yyyyMMdd"));key.SetValue("NoModify",1);key.SetValue("NoRepair",1);}
+                using(RegistryKey key=Registry.CurrentUser.CreateSubKey(Key(options.Test))){key.SetValue("DisplayName",options.Test?"PocketPad Desktop Test":"PocketPad Desktop");key.SetValue("DisplayVersion","2.2");key.SetValue("Publisher","Sanjay");key.SetValue("InstallLocation",target);key.SetValue("DisplayIcon",Path.Combine(target,"PocketPad.exe"));key.SetValue("UninstallString","\""+Path.Combine(target,"Uninstall.exe")+"\" --uninstall");key.SetValue("QuietUninstallString","\""+Path.Combine(target,"Uninstall.exe")+"\" --uninstall --silent");key.SetValue("InstallDate",DateTime.Now.ToString("yyyyMMdd"));key.SetValue("NoModify",1);key.SetValue("NoRepair",1);}
                 string menu=options.Test?Path.Combine(Path.GetDirectoryName(target),"test-shortcuts"):Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Programs),"PocketPad");Directory.CreateDirectory(menu);Shortcut(Path.Combine(menu,"PocketPad.lnk"),Path.Combine(target,"PocketPad.exe"),Path.Combine(target,"PocketPad.exe"));Shortcut(Path.Combine(menu,"Uninstall PocketPad.lnk"),Path.Combine(target,"Uninstall.exe"),Path.Combine(target,"Uninstall.exe"));if(options.Desktop&&!options.Test)Shortcut(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory),"PocketPad.lnk"),Path.Combine(target,"PocketPad.exe"),Path.Combine(target,"PocketPad.exe"));
                 progress.Report(Tuple.Create(100.0,"PocketPad is ready"));File.AppendAllText(Path.Combine(logFolder,"setup.log"),DateTime.Now.ToString("s")+" Installed "+target+Environment.NewLine);
             }catch(Exception e){File.AppendAllText(Path.Combine(logFolder,"setup.log"),e.ToString()+Environment.NewLine);throw;}
